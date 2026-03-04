@@ -125,7 +125,6 @@ Analiza:
 5. Alegere Algoritm
 
 | Scenariu | Algoritm |
-|---|---|
 | O sursă, toate destinațiile, ponderi pozitive | Dijkstra |
 | Ponderi negative, detecție cicluri | Bellman-Ford |
 | O pereche sursă-destinație, ponderi pozitive | A* |
