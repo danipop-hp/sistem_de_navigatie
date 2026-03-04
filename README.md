@@ -147,10 +147,3 @@ Analiza:
 2. Bellman-Ford: Necesar pentru ponderi negative
 3. A*: Performanță maximă practică; folosit în GPS
 
-Recomandări implementare:
-1. Start Dijkstra pe matrice ($O(V^2)$, ușor)
-2. Optimizare Dijkstra cu PQ ($O((V+E)\log V)$, mai complex)
-3. Implementare Bellman-Ford 
-4. Adaugare A* cu heuristic euclidiană
-5. Testare și benchmark
-
