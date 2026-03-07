@@ -21,7 +21,7 @@ Grafurile urbane sunt rare, deci lista de adiacență e preferată.
 
 ### 3.1 Dijkstra
 
-Principiu: Greedy - explorează nodurile cel mai apropiat de sursă
+Principiu: Greedy - explorează nodurile cele mai apropiate de sursă
 Complexitate: $O((V+E)\log V)$ cu priority queue, $O(V^2)$ cu matrice
 Ponderi: Doar pozitive
 Cazuri: Google Maps, OSPF routing
