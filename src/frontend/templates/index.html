@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Urban Navigation Grid - Flask</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<h1>Urban Navigation System</h1>
+
+<div id="grid"></div>
+
+<div class="controls">
+    <button onclick="setMode('obstacle')">Obstacle</button>
+    <button onclick="setMode('start')">Start</button>
+    <button onclick="setMode('end')">Destination</button>
+    <button onclick="calculatePath()">Calculate Path</button>
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
