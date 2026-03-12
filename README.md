@@ -21,7 +21,7 @@ Grafurile urbane sunt rare, deci lista de adiacență e preferată.
 
 ### 3.1 Dijkstra
 
-Principiu: Greedy - explorează nodurile cel mai apropiat de sursă
+Principiu: Greedy - explorează nodurile cele mai apropiate de sursă
 Complexitate: $O((V+E)\log V)$ cu priority queue, $O(V^2)$ cu matrice
 Ponderi: Doar pozitive
 Cazuri: Google Maps, OSPF routing
@@ -125,7 +125,6 @@ Analiza:
 5. Alegere Algoritm
 
 | Scenariu | Algoritm |
-|---|---|
 | O sursă, toate destinațiile, ponderi pozitive | Dijkstra |
 | Ponderi negative, detecție cicluri | Bellman-Ford |
 | O pereche sursă-destinație, ponderi pozitive | A* |
@@ -146,11 +145,4 @@ Analiza:
 1. Dijkstra: Cel mai bun pentru grafuri urbane (ponderi pozitive)
 2. Bellman-Ford: Necesar pentru ponderi negative
 3. A*: Performanță maximă practică; folosit în GPS
-
-Recomandări implementare:
-1. Start Dijkstra pe matrice ($O(V^2)$, ușor)
-2. Optimizare Dijkstra cu PQ ($O((V+E)\log V)$, mai complex)
-3. Implementare Bellman-Ford (robustețe)
-4. Adaugare A* cu heuristic euclidiană
-5. Testare și benchmark
 
