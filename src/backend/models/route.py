@@ -6,12 +6,12 @@ from typing import Dict, List
 class Route:
 	"""Represents a path and its aggregate cost."""
 
-	nodes: List[str] = field(default_factory=list)
-	total_cost: float = 0.0
+	noduri: List[str] = field(default_factory=list)
+	cost_total: float = 0.0
 
 	def to_dict(self) -> Dict[str, object]:
 		return {
-			"nodes": self.nodes,
-			"total_cost": self.total_cost,
+			"noduri": self.noduri,
+			"cost_total": self.cost_total,
 		}
 

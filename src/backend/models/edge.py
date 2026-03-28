@@ -5,7 +5,7 @@ from dataclasses import dataclass
 class Edge:
 	"""Directed weighted edge between two nodes."""
 
-	source: str
-	target: str
-	weight: float = 1.0
+	sursa: str
+	tinta: str
+	pondere: float = 1.0
 

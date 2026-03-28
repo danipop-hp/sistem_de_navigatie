@@ -6,9 +6,9 @@ from typing import Optional
 class Node:
 	"""Graph node with optional cartesian and GPS coordinates."""
 
-	node_id: str
+	id_nod: str
 	x: Optional[float] = None
 	y: Optional[float] = None
-	lat: Optional[float] = None
-	lon: Optional[float] = None
+	latitudine: Optional[float] = None
+	longitudine: Optional[float] = None
 

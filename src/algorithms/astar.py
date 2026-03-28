@@ -8,10 +8,10 @@ Coordinates = Dict[str, Tuple[float, float]]
 Heuristic = Callable[[str, str], float]
 
 
-def _euclidean_heuristic(coordinates: Coordinates) -> Heuristic:
-	def h(node: str, goal: str) -> float:
-		x1, y1 = coordinates[node]
-		x2, y2 = coordinates[goal]
+def _euclidean_heuristic(coordonate: Coordinates) -> Heuristic:
+	def h(nod: str, scop: str) -> float:
+		x1, y1 = coordonate[nod]
+		x2, y2 = coordonate[scop]
 		return math.hypot(x2 - x1, y2 - y1)
 
 	return h
@@ -22,54 +22,54 @@ def _zero_heuristic(_: str, __: str) -> float:
 
 
 def astar(
-	graph: Graph,
-	start: str,
-	goal: str,
-	coordinates: Optional[Coordinates] = None,
-	heuristic: Optional[Heuristic] = None,
+	graf: Graph,
+	nod_start: str,
+	nod_scop: str,
+	coordonate: Optional[Coordinates] = None,
+	heuristica: Optional[Heuristic] = None,
 ) -> Tuple[List[str], float]:
 	"""Compute a shortest path using A* on positive-weighted graphs."""
-	if start not in graph or goal not in graph:
+	if nod_start not in graf or nod_scop not in graf:
 		raise ValueError("Both start and goal must exist in graph")
 
-	if heuristic is None:
-		heuristic = _euclidean_heuristic(coordinates) if coordinates else _zero_heuristic
+	if euristica is None:
+		euristica = _euclidean_heuristic(coordonate) if coordonate else _zero_heuristic
 
-	g_score: Dict[str, float] = {node: float("inf") for node in graph}
-	f_score: Dict[str, float] = {node: float("inf") for node in graph}
-	previous: Dict[str, Optional[str]] = {node: None for node in graph}
+	scor_g: Dict[str, float] = {nod: float("inf") for nod in graf}
+	scor_f: Dict[str, float] = {nod: float("inf") for nod in graf}
+	precedent: Dict[str, Optional[str]] = {nod: None for nod in graf}
 
-	g_score[start] = 0.0
-	f_score[start] = heuristic(start, goal)
+	scor_g[nod_start] = 0.0
+	scor_f[nod_start] = euristica(nod_start, nod_scop)
 
-	queue: List[Tuple[float, str]] = [(f_score[start], start)]
+	coada: List[Tuple[float, str]] = [(scor_f[nod_start], nod_start)]
 
-	while queue:
-		_, current = heapq.heappop(queue)
-		if current == goal:
-			return _reconstruct(previous, start, goal), g_score[goal]
+	while coada:
+		_, nod_curent = heapq.heappop(coada)
+		if nod_curent == nod_scop:
+			return _reconstruct(precedent, nod_start, nod_scop), scor_g[nod_scop]
 
-		for neighbor, weight in graph.get(current, []):
-			if weight < 0:
+		for vecin, pondere in graf.get(nod_curent, []):
+			if pondere < 0:
 				raise ValueError("A* does not support negative edge weights")
 
-			candidate_g = g_score[current] + weight
-			if candidate_g < g_score.get(neighbor, float("inf")):
-				previous[neighbor] = current
-				g_score[neighbor] = candidate_g
-				f_score[neighbor] = candidate_g + heuristic(neighbor, goal)
-				heapq.heappush(queue, (f_score[neighbor], neighbor))
+			cost_candidat_g = scor_g[nod_curent] + pondere
+			if cost_candidat_g < scor_g.get(vecin, float("inf")):
+				precedent[vecin] = nod_curent
+				scor_g[vecin] = cost_candidat_g
+				scor_f[vecin] = cost_candidat_g + euristica(vecin, nod_scop)
+				heapq.heappush(coada, (scor_f[vecin], vecin))
 
 	return [], float("inf")
 
 
-def _reconstruct(previous: Dict[str, Optional[str]], start: str, goal: str) -> List[str]:
-	path: List[str] = []
-	current: Optional[str] = goal
-	while current is not None:
-		path.append(current)
-		if current == start:
-			return list(reversed(path))
-		current = previous.get(current)
+def _reconstruct(precedent: Dict[str, Optional[str]], nod_start: str, nod_scop: str) -> List[str]:
+	drum: List[str] = []
+	nod_curent: Optional[str] = nod_scop
+	while nod_curent is not None:
+		drum.append(nod_curent)
+		if nod_curent == nod_start:
+			return list(reversed(drum))
+		nod_curent = precedent.get(nod_curent)
 	return []
 
