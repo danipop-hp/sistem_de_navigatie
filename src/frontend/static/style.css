@@ -31,6 +31,10 @@ body {
     background-color: blue;
 }
 
+.visited {
+    background-color: #ffd166;
+}
+
 .path {
     background-color: red;
 }

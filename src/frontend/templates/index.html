@@ -12,10 +12,14 @@
 <div id="grid"></div>
 
 <div class="controls">
-    <button onclick="setMode('obstacle')">Obstacle</button>
-    <button onclick="setMode('start')">Start</button>
-    <button onclick="setMode('end')">Destination</button>
-    <button onclick="calculatePath()">Calculate Path</button>
+    <div class="button-group">
+        <button onclick="setMode('obstacle')" class="btn-obs">Obstacle</button>
+        <button onclick="setMode('start')" class="btn-start">Start</button>
+        <button onclick="setMode('end')" class="btn-end">Destination</button>
+    </div>
+    <div class="action-group" style="margin-top: 10px;">
+        <button onclick="calculatePath()" class="btn-calc">Calculate Path</button>
+    </div>
 </div>
 
 <script src="{{ url_for('static', filename='script.js') }}"></script>
