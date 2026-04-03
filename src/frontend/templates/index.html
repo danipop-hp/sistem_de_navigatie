@@ -12,14 +12,8 @@
 <div id="grid"></div>
 
 <div class="controls">
-    <div class="button-group">
-        <button onclick="setMode('obstacle')" class="btn-obs">Obstacle</button>
-        <button onclick="setMode('start')" class="btn-start">Start</button>
-        <button onclick="setMode('end')" class="btn-end">Destination</button>
-    </div>
-    <div class="action-group" style="margin-top: 10px;">
-        <button onclick="calculatePath()" class="btn-calc">Calculate Path</button>
-    </div>
+    <p>Click 1: Start, Click 2: Destination, Click 3: Reset pentru o noua cautare.</p>
+    <button onclick="resetareHarta()" class="btn-calc">Reset</button>
 </div>
 
 <script src="{{ url_for('static', filename='script.js') }}"></script>

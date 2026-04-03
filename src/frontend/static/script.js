@@ -1,10 +1,18 @@
 const grila = document.getElementById("grid");
-let mod = "obstacle";
 const randuri = 5;
 const coloane = 5;
 const celule = [];
+const hartaOras = [
+    [0, 1, 0, 0, 0],
+    [0, 1, 1, 1, 0],
+    [0, 0, 0, 1, 0],
+    [1, 1, 1, 1, 1],
+    [0, 1, 0, 0, 0]
+];
 const INTARZIERE_VIZITA_MS = 120;
 let idRulareAnimatie = 0;
+let punctStart = null;
+let punctSfarsit = null;
 
 function trimiteDrumLaHarta(celuleDrum) {
     return fetch('/proiecteaza-harta', {
@@ -15,11 +23,69 @@ function trimiteDrumLaHarta(celuleDrum) {
         if (!response.ok) {
             throw new Error('Serverul nu a putut proiecta drumul pe harta.');
         }
+        return fetch('/salveaza_ruta', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ puncte: celuleDrum })
+        });
+    }).then((responseSalvare) => {
+        if (!responseSalvare.ok) {
+            console.warn('Ruta a fost proiectata, dar salvarea in istoric a esuat.');
+        }
         window.location.href = '/map';
     });
 }
 
-function setMode(modNou){ mod = modNou; }
+function setMode(modNou){
+    console.info(`Modul ${modNou} nu mai este folosit. Selecteaza direct pe harta: start, destinatie, apoi reset.`);
+}
+
+function handleCellClick(rand, coloana) {
+    if (hartaOras[rand][coloana] === 0) {
+        alert("Nu poti pune puncte pe cladiri! Selecteaza o strada.");
+        return;
+    }
+
+    const celula = celule[rand][coloana];
+
+    if (!punctStart) {
+        punctStart = [rand, coloana];
+        celula.classList.remove("path", "visited");
+        celula.classList.add("start");
+        return;
+    }
+
+    if (!punctSfarsit) {
+        if (punctStart[0] === rand && punctStart[1] === coloana) {
+            alert("Destinatia trebuie sa fie diferita de start.");
+            return;
+        }
+
+        punctSfarsit = [rand, coloana];
+        celula.classList.remove("path", "visited");
+        celula.classList.add("end");
+        ruleazaNavigatia();
+        return;
+    }
+
+    resetareHarta();
+}
+
+function resetareHarta() {
+    idRulareAnimatie += 1;
+    punctStart = null;
+    punctSfarsit = null;
+
+    for (let i = 0; i < randuri; i++) {
+        for (let j = 0; j < coloane; j++) {
+            const celula = celule[i][j];
+            celula.classList.remove("start", "end", "path", "visited", "obstacle");
+            if (hartaOras[i][j] === 0) {
+                celula.classList.add("obstacle");
+            }
+        }
+    }
+}
 
 for(let i=0;i<randuri;i++){
     celule[i]=[];
@@ -27,42 +93,30 @@ for(let i=0;i<randuri;i++){
         const celula = document.createElement("div");
         celula.classList.add("cell");
 
-        celula.addEventListener("click", function(){
-            if(mod==="obstacle"){
-                celula.classList.remove("start","end","path","visited");
-                celula.classList.add("obstacle");
-            }else if(mod==="start"){
-                document.querySelectorAll(".start").forEach(c=>c.classList.remove("start"));
-                celula.classList.remove("obstacle","end","path","visited");
-                celula.classList.add("start");
-            }else if(mod==="end"){
-                document.querySelectorAll(".end").forEach(c=>c.classList.remove("end"));
-                celula.classList.remove("obstacle","start","path","visited");
-                celula.classList.add("end");
-            }
-        });
+        if(hartaOras[i][j] === 0) {
+            celula.classList.add("obstacle");
+        } else {
+            celula.addEventListener("click", () => handleCellClick(i, j));
+        }
 
         grila.appendChild(celula);
         celule[i][j]=celula;
     }
 }
 
-function calculatePath(){
+function ruleazaNavigatia(){
+    if(!punctStart || !punctSfarsit){
+        alert("Selecteaza mai intai startul si destinatia.");
+        return;
+    }
+
     idRulareAnimatie += 1;
     const idRulare = idRulareAnimatie;
 
     document.querySelectorAll(".path").forEach(c=>c.classList.remove("path"));
     document.querySelectorAll(".visited").forEach(c=>c.classList.remove("visited"));
-    const celulaStart = document.querySelector(".start");
-    const celulaFinal = document.querySelector(".end");
-    if(!celulaStart || !celulaFinal){ alert("Setează Start și Destination!"); return; }
-
-    let pozitieStart,pozitieFinal;
-    for(let i=0;i<randuri;i++)
-        for(let j=0;j<coloane;j++){
-            if(celule[i][j]===celulaStart) pozitieStart=[i,j];
-            if(celule[i][j]===celulaFinal) pozitieFinal=[i,j];
-        }
+    const pozitieStart = punctStart;
+    const pozitieFinal = punctSfarsit;
 
     const setDeschis = [pozitieStart];
     const precedent = Array.from({length:randuri},()=>Array(coloane).fill(null));
@@ -91,7 +145,7 @@ function calculatePath(){
         for(const [dx,dy] of directii){
             const nx=x+dx, ny=y+dy;
             if(nx<0 || nx>=randuri || ny<0 || ny>=coloane) continue;
-            if(celule[nx][ny].classList.contains("obstacle")) continue;
+            if(hartaOras[nx][ny] !== 1) continue;
 
             const scorGTemporar = scorG[x][y] + 1;
             if(scorGTemporar < scorG[nx][ny]){
@@ -166,4 +220,8 @@ function calculatePath(){
             alert("Drumul a fost calculat, dar proiectarea pe harta a esuat.");
         });
     }, intarziereProiectie);
+}
+
+function calculatePath(){
+    ruleazaNavigatia();
 }
