@@ -60,18 +60,16 @@
 </head>
 <body
     data-centru-harta='{{ centru_harta | tojson | safe }}'
-    data-offset-grila='{{ offset | tojson | safe }}'
-    data-harta-oras='{{ harta_oras | tojson | safe }}'
     data-traseu-initial='{{ traseu_initial | tojson | safe }}'
+    data-serviciu-rutare-activ='{{ serviciu_rutare_activ | tojson | safe }}'
 >
     <div class="panou">
         <h2>Navigatie directa pe harta</h2>
         <div id="status" class="mesaj">
-            Click 1: Start, Click 2: Destinatie, Click 3: Reset. Navigatia merge doar pe drumuri.
+            Click 1: Start, Click 2: Destinatie, Click 3: Reset. Ruta este calculata doar pe drumuri.
         </div>
         <div class="actiuni">
             <button id="resetBtn" type="button">Reset</button>
-            <button id="acasaBtn" type="button">Inapoi la grid</button>
         </div>
     </div>
     <div id="map"></div>
@@ -83,9 +81,8 @@
     ></script>
     <script>
         const centruHarta = JSON.parse(document.body.dataset.centruHarta);
-        const offsetGrila = Number(document.body.dataset.offsetGrila);
-        const hartaOras = JSON.parse(document.body.dataset.hartaOras);
         const traseuInitial = JSON.parse(document.body.dataset.traseuInitial);
+        const serviciuRutareActiv = JSON.parse(document.body.dataset.serviciuRutareActiv);
 
         let punctStart = null;
         let punctFinal = null;
@@ -100,38 +97,6 @@
             maxZoom: 19,
             attribution: "&copy; OpenStreetMap contributors"
         }).addTo(map);
-
-        function gpsLaGrid(lat, lon) {
-            const rand = Math.round((centruHarta[0] - lat) / offsetGrila);
-            const coloana = Math.round((lon - centruHarta[1]) / offsetGrila);
-            return [rand, coloana];
-        }
-
-        function inGrila(rand, coloana) {
-            return rand >= 0 && rand < hartaOras.length && coloana >= 0 && coloana < hartaOras[0].length;
-        }
-
-        function esteDrum(rand, coloana) {
-            return inGrila(rand, coloana) && hartaOras[rand][coloana] === 1;
-        }
-
-        function deseneazaSuprapunereGrid() {
-            for (let rand = 0; rand < hartaOras.length; rand++) {
-                for (let coloana = 0; coloana < hartaOras[0].length; coloana++) {
-                    const nord = centruHarta[0] - (rand * offsetGrila);
-                    const sud = centruHarta[0] - ((rand + 1) * offsetGrila);
-                    const vest = centruHarta[1] + (coloana * offsetGrila);
-                    const est = centruHarta[1] + ((coloana + 1) * offsetGrila);
-
-                    L.rectangle([[sud, vest], [nord, est]], {
-                        color: "#3a3a3a",
-                        weight: 1,
-                        fillColor: hartaOras[rand][coloana] === 1 ? "#74c69d" : "#adb5bd",
-                        fillOpacity: hartaOras[rand][coloana] === 1 ? 0.15 : 0.35
-                    }).addTo(map);
-                }
-            }
-        }
 
         function actualizeazaStatus(text) {
             statusEl.textContent = text;
@@ -154,7 +119,7 @@
                 traseuLayer = null;
             }
 
-            actualizeazaStatus("Click 1: Start, Click 2: Destinatie, Click 3: Reset. Navigatia merge doar pe drumuri.");
+            actualizeazaStatus("Click 1: Start, Click 2: Destinatie, Click 3: Reset. Ruta este calculata doar pe drumuri.");
         }
 
         async function cereRuta() {
@@ -172,30 +137,36 @@
             if (traseuLayer) {
                 map.removeLayer(traseuLayer);
             }
+
             traseuLayer = L.polyline(date.path_gps, {
                 color: "#e63946",
                 weight: 6,
                 opacity: 0.85
             }).addTo(map);
 
+            map.fitBounds(traseuLayer.getBounds(), { padding: [20, 20] });
+
             await fetch("/salveaza_ruta", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ puncte: date.path_grid })
+                body: JSON.stringify({
+                    path_gps: date.path_gps,
+                    distance_m: date.distance_m,
+                    duration_min: date.duration_min
+                })
             });
 
-            actualizeazaStatus("Ruta calculata. Click inca o data pe harta pentru reset si o cautare noua.");
+            actualizeazaStatus(`Ruta calculata: ${date.distance_m} m, ~${date.duration_min} min. Click inca o data pe harta pentru reset.`);
         }
 
         map.on("click", async (event) => {
-            const lat = event.latlng.lat;
-            const lon = event.latlng.lng;
-            const [rand, coloana] = gpsLaGrid(lat, lon);
-
-            if (!esteDrum(rand, coloana)) {
-                alert("Punct invalid: selecteaza direct pe o celula de drum.");
+            if (!serviciuRutareActiv) {
+                alert("Serviciul de rutare nu este activ. Verifica dependintele backend.");
                 return;
             }
+
+            const lat = event.latlng.lat;
+            const lon = event.latlng.lng;
 
             if (!punctStart) {
                 punctStart = { lat, lon };
@@ -232,12 +203,11 @@
             map.fitBounds(traseuLayer.getBounds(), { padding: [20, 20] });
         }
 
-        deseneazaSuprapunereGrid();
+        if (!serviciuRutareActiv) {
+            actualizeazaStatus("Serviciul de rutare nu este activ. Instaleaza dependintele si ruleaza aplicatia cu internet la prima pornire.");
+        }
 
         document.getElementById("resetBtn").addEventListener("click", reseteazaSelectia);
-        document.getElementById("acasaBtn").addEventListener("click", () => {
-            window.location.href = "/";
-        });
     </script>
 </body>
 </html>
