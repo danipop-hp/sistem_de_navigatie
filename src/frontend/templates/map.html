@@ -2,212 +2,77 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Navigatie Directa pe Harta</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem de Navigatie Urbana</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
     <link
         rel="stylesheet"
         href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
         crossorigin=""
     >
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f4f6f8;
-        }
-        
-        .panou {
-            max-width: 1000px;
-            margin: 16px auto 0;
-            padding: 0 16px;
-        }
-
-        #map {
-            height: 72vh;
-            max-width: 1000px;
-            margin: 12px auto 20px;
-            border: 1px solid #cfd6dd;
-            border-radius: 8px;
-        }
-
-        .mesaj {
-            background: #ffffff;
-            border: 1px solid #d9e0e8;
-            border-radius: 8px;
-            padding: 10px 12px;
-            color: #1f2d3d;
-        }
-
-        .actiuni {
-            margin-top: 10px;
-            display: flex;
-            gap: 8px;
-        }
-
-        button {
-            border: none;
-            background: #0b5ed7;
-            color: white;
-            padding: 9px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #0849a9;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/map.css') }}">
 </head>
 <body
     data-centru-harta='{{ centru_harta | tojson | safe }}'
     data-traseu-initial='{{ traseu_initial | tojson | safe }}'
     data-serviciu-rutare-activ='{{ serviciu_rutare_activ | tojson | safe }}'
 >
-    <div class="panou">
-        <h2>Navigatie directa pe harta</h2>
-        <div id="status" class="mesaj">
-            Click 1: Start, Click 2: Destinatie, Click 3: Reset. Ruta este calculata doar pe drumuri.
-        </div>
-        <div class="actiuni">
-            <button id="resetBtn" type="button">Reset</button>
-        </div>
+    <div class="pagina">
+        <section class="zona-principala">
+            <div class="card panou">
+                <div class="titlu">
+                    <div>
+                        <h1>Sistem de Navigatie Urbana - Baia Mare</h1>
+                        <div class="subtitlu">Selecteaza punctul de start si destinatia direct pe harta.</div>
+                    </div>
+                    <span id="badgeRutare" class="badge">Serviciu activ</span>
+                </div>
+
+                <div class="statistici">
+                    <div class="stat">
+                        <p class="label">Distanta curenta</p>
+                        <p id="distantaCurenta" class="value">-</p>
+                    </div>
+                    <div class="stat">
+                        <p class="label">Durata estimata</p>
+                        <p id="durataCurenta" class="value">-</p>
+                    </div>
+                    <div class="stat">
+                        <p class="label">Rute salvate</p>
+                        <p id="numarRute" class="value">0</p>
+                    </div>
+                </div>
+
+                <div id="status" class="mesaj">
+                    Click 1: Start, Click 2: Destinatie, Click 3: Reset. Ruta este calculata pe reteaua rutiera.
+                </div>
+
+                <div class="actiuni">
+                    <button id="resetBtn" type="button" class="avertizare">Reset selectie</button>
+                    <button id="incarcaIstoricBtn" type="button" class="secundar">Actualizeaza istoric</button>
+                </div>
+            </div>
+
+            <div id="map" class="card"></div>
+        </section>
+
+        <aside class="zona-secundara">
+            <div class="card istoric">
+                <h2>Istoric rute</h2>
+                <small>Ultimele rute salvate in baza de date.</small>
+                <ul id="listaIstoric"></ul>
+            </div>
+        </aside>
     </div>
-    <div id="map"></div>
 
     <script
         src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
         crossorigin=""
     ></script>
-    <script>
-        const centruHarta = JSON.parse(document.body.dataset.centruHarta);
-        const traseuInitial = JSON.parse(document.body.dataset.traseuInitial);
-        const serviciuRutareActiv = JSON.parse(document.body.dataset.serviciuRutareActiv);
-
-        let punctStart = null;
-        let punctFinal = null;
-        let markerStart = null;
-        let markerFinal = null;
-        let traseuLayer = null;
-
-        const statusEl = document.getElementById("status");
-
-        const map = L.map("map").setView(centruHarta, 16);
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            maxZoom: 19,
-            attribution: "&copy; OpenStreetMap contributors"
-        }).addTo(map);
-
-        function actualizeazaStatus(text) {
-            statusEl.textContent = text;
-        }
-
-        function reseteazaSelectia() {
-            punctStart = null;
-            punctFinal = null;
-
-            if (markerStart) {
-                map.removeLayer(markerStart);
-                markerStart = null;
-            }
-            if (markerFinal) {
-                map.removeLayer(markerFinal);
-                markerFinal = null;
-            }
-            if (traseuLayer) {
-                map.removeLayer(traseuLayer);
-                traseuLayer = null;
-            }
-
-            actualizeazaStatus("Click 1: Start, Click 2: Destinatie, Click 3: Reset. Ruta este calculata doar pe drumuri.");
-        }
-
-        async function cereRuta() {
-            const raspuns = await fetch("/calculeaza-ruta-harta", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ start: punctStart, end: punctFinal })
-            });
-
-            const date = await raspuns.json();
-            if (!raspuns.ok) {
-                throw new Error(date.message || "Nu s-a putut calcula ruta.");
-            }
-
-            if (traseuLayer) {
-                map.removeLayer(traseuLayer);
-            }
-
-            traseuLayer = L.polyline(date.path_gps, {
-                color: "#e63946",
-                weight: 6,
-                opacity: 0.85
-            }).addTo(map);
-
-            map.fitBounds(traseuLayer.getBounds(), { padding: [20, 20] });
-
-            await fetch("/salveaza_ruta", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    path_gps: date.path_gps,
-                    distance_m: date.distance_m,
-                    duration_min: date.duration_min
-                })
-            });
-
-            actualizeazaStatus(`Ruta calculata: ${date.distance_m} m, ~${date.duration_min} min. Click inca o data pe harta pentru reset.`);
-        }
-
-        map.on("click", async (event) => {
-            if (!serviciuRutareActiv) {
-                alert("Serviciul de rutare nu este activ. Verifica dependintele backend.");
-                return;
-            }
-
-            const lat = event.latlng.lat;
-            const lon = event.latlng.lng;
-
-            if (!punctStart) {
-                punctStart = { lat, lon };
-                markerStart = L.marker([lat, lon]).addTo(map).bindPopup("Start").openPopup();
-                actualizeazaStatus("Start setat. Alege acum destinatia pe un drum.");
-                return;
-            }
-
-            if (!punctFinal) {
-                punctFinal = { lat, lon };
-                markerFinal = L.marker([lat, lon]).addTo(map).bindPopup("Destinatie");
-                try {
-                    await cereRuta();
-                } catch (eroare) {
-                    alert(eroare.message);
-                    punctFinal = null;
-                    if (markerFinal) {
-                        map.removeLayer(markerFinal);
-                        markerFinal = null;
-                    }
-                }
-                return;
-            }
-
-            reseteazaSelectia();
-        });
-
-        if (Array.isArray(traseuInitial) && traseuInitial.length >= 2) {
-            traseuLayer = L.polyline(traseuInitial, {
-                color: "#e63946",
-                weight: 6,
-                opacity: 0.75
-            }).addTo(map);
-            map.fitBounds(traseuLayer.getBounds(), { padding: [20, 20] });
-        }
-
-        if (!serviciuRutareActiv) {
-            actualizeazaStatus("Serviciul de rutare nu este activ. Instaleaza dependintele si ruleaza aplicatia cu internet la prima pornire.");
-        }
-
-        document.getElementById("resetBtn").addEventListener("click", reseteazaSelectia);
-    </script>
+    <script src="{{ url_for('static', filename='js/map.js') }}"></script>
 </body>
 </html>
